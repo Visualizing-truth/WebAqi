@@ -36,7 +36,7 @@ function delay(ms) {
     const lats = [];
     const lngs = [];
     const cityNames = [];
-    const response = await fetch('Cities.csv');
+    const response = await fetch('test.csv');
     const data = await response.text();
   
     const rows = data.split('\n');
