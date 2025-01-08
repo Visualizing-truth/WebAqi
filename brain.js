@@ -31,56 +31,7 @@ function delay(ms) {
     }
   }
   
-  
-  async function getAttributes(){
-    const lats = [];
-    const lngs = [];
-    const cityNames = [];
-    const response = await fetch('test.csv');
-    const data = await response.text();
-  
-    const rows = data.split('\n');
-    for (let i = 0; i < rows.length; i++){
-        elts = rows[i].split(',');
-        cityName = elts[0];
-        lat = elts[1];
-        lng = elts[2];
-        lats.push(lat);
-        lngs.push(lng);
-        cityNames.push(cityName);
-    }
-    return {lats, lngs, cityNames};
-  }
-  
-  async function getAqiValues(){
-    const data = await getAttributes();
-    lats = data.lats;
-    lngs = data.lngs;
-    console.log(lats);
-
-    MaxPm25 = [];
-    MaxPm10 = [];
-  
-    for (let i = 0; i < lats.length; i++){
-        const response = await fetch(`http://api.openweathermap.org/data/2.5/air_pollution/history?lat=${lats[i]}&lon=${lngs[i]}&start=1606223802&end=1606482999&appid=c77c653cd58975040009a20137296a8d`);
-        const aqiData = await response.json();
-        
-        // Determine statistically the best method to do this
-        const pm25Values = aqiData.list.map(entry => entry.components.pm2_5);
-        const pm10Values = aqiData.list.map(entry => entry.components.pm10);
-        MaxPm10.push(Math.max.apply(null,pm10Values));
-        MaxPm25.push(Math.max.apply(null,pm25Values));
-        console.log(i);
-        console.log(Math.max.apply(null,pm25Values))
-        await delay(1002);
-    }
-    
-    return {MaxPm25, MaxPm10}
-  }
-  
   // storedAqiData = await getAqiValues();
-  
-  
   
   async function initMap() {
     // Create the map.
@@ -89,33 +40,45 @@ function delay(ms) {
       center: { lat: 28.09, lng: 77.712 },
       mapTypeId: "terrain",
     });
-  
-    const data = await getAttributes();
-    const aqiData = await getAqiValues();
     const citymap = {};
   
-    for (let i = 0; i<data.lats.length; i++){
-      citymap[data.cityNames[i]] = {
+    const response = await fetch('city_aqi_data.csv');
+    const data = await response.text();
+
+
+    const rows = data.split("\n").slice(1)
+
+
+    console.log(rows)
+    rows.forEach(row => {
+      const cityinfo = row.split(',');
+      citymap[cityinfo[0]] = {
         center: {
-          lat: parseFloat(data.lats[i]),
-          lng: parseFloat(data.lngs[i])
+          lat: parseFloat(cityinfo[1]),
+          lng: parseFloat(cityinfo[2])
         },
-        pm25: aqiData.MaxPm25[i]
+        pollutants: {
+          pm25: cityinfo[3],
+          pm10: cityinfo[4]
+        }
       }
-  
-    }
+
+    })
     for (const city in citymap) {
       const cityCircle = new google.maps.Circle({
-        strokeColor: getColor(citymap[city].pm25),
+        strokeColor: getColor(citymap[city].pollutants.pm25),
         strokeOpacity: 0.8,
         strokeWeight: 2,
-        fillColor: getColor(citymap[city].pm25),
+        fillColor: getColor(citymap[city].pollutants.pm25),
         fillOpacity: 0.8,
         map,
         center: citymap[city].center,
         radius: 50000,
       });
-    }
-  }
+  
+    }}
+    
+  
+  
   
 window.initMap = initMap;
