@@ -42,7 +42,7 @@ function delay(ms) {
     });
     const citymap = {};
   
-    const response = await fetch('city_aqi_data.csv');
+    const response = await fetch(''./city_aqi_data.csv'');
     const data = await response.text();
 
 
